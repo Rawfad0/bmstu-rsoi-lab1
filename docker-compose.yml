@@ -1,0 +1,33 @@
+services:
+  app:
+    image: person-service:local
+    container_name: person-service
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+psycopg://program:test@db:5432/persons
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:13
+    container_name: persons-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: persons
+      POSTGRES_USER: program
+      POSTGRES_PASSWORD: test
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U program -d persons"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
