@@ -6,6 +6,9 @@ on:
   pull_request:
     branches:
       - develop
+permissions:
+  contents: read
+  packages: write
 jobs:
   build:
     name: Autograding
@@ -28,9 +31,28 @@ jobs:
       - name: Run unit tests
         run: pytest -v
 
-      - name: Build Docker image
+      - name: Build local Docker image
         run: docker build -t person-service:local .
 
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/rawfad0/bmstu-rsoi-lab1:latest
       - name: Start application
         run: docker compose up -d
 
