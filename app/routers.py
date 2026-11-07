@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, Response
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from app import models
@@ -6,6 +7,13 @@ from app.database import get_db
 from app.schemas import PersonRequest, PersonResponse, PersonUpdate
 
 router = APIRouter(prefix="/api/v1/persons", tags=["persons"])
+
+
+def person_not_found():
+    return JSONResponse(
+        status_code=404,
+        content={"message": "Person not found"},
+    )
 
 
 @router.get("", response_model=list[PersonResponse])
@@ -18,7 +26,7 @@ def get_person(personId: int, db: Session = Depends(get_db)):
     person = db.get(models.Person, personId)
 
     if person is None:
-        raise HTTPException(status_code=404, detail="Person not found")
+        return person_not_found()
 
     return person
 
@@ -54,9 +62,15 @@ def update_person(
     person = db.get(models.Person, personId)
 
     if person is None:
-        raise HTTPException(status_code=404, detail="Person not found")
+        return person_not_found()
 
     update_data = person_data.model_dump(exclude_unset=True)
+
+    if not update_data:
+        return JSONResponse(
+            status_code=400,
+            content={"message": "No fields to update"},
+        )
 
     for field, value in update_data.items():
         setattr(person, field, value)
@@ -75,7 +89,7 @@ def delete_person(
     person = db.get(models.Person, personId)
 
     if person is None:
-        raise HTTPException(status_code=404, detail="Person not found")
+        return person_not_found()
 
     db.delete(person)
     db.commit()

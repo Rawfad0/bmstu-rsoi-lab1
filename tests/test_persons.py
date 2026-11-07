@@ -102,5 +102,34 @@ def test_delete_person(client):
     assert response.text == ""
 
     response = client.get("/api/v1/persons/1")
+    assert response.status_code == 404
+    assert response.json() == {"message": "Person not found"}
+
+
+def test_update_person_not_found(client):
+    response = client.patch(
+        "/api/v1/persons/999",
+        json={"age": 30},
+    )
 
     assert response.status_code == 404
+    assert response.json() == {"message": "Person not found"}
+
+
+def test_delete_person_not_found(client):
+    response = client.delete("/api/v1/persons/999")
+
+    assert response.status_code == 404
+    assert response.json() == {"message": "Person not found"}
+
+
+def test_update_person_empty_body(client):
+    create_person(client)
+
+    response = client.patch(
+        "/api/v1/persons/1",
+        json={},
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {"message": "No fields to update"}
