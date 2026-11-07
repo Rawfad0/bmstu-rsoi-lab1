@@ -75,3 +75,11 @@ jobs:
           environment: postman/[inst][ci] Lab1.postman_environment.json
           delayRequest: 100
           reporters: '[ "cli" ]'
+
+      - name: Run API Tests against Render
+        uses: matt-ball/newman-action@master
+        with:
+          collection: postman/[inst] Lab1.postman_collection.json
+          environment: postman/[inst][render] Lab1.postman_environment.json
+          delayRequest: 100
+          reporters: '[ "cli" ]'
