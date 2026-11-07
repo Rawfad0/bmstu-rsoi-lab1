@@ -1,0 +1,55 @@
+name: GitHub Classroom Workflow
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
+jobs:
+  build:
+    name: Autograding
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run unit tests
+        run: pytest -v
+
+      - name: Build Docker image
+        run: docker build -t person-service:local .
+
+      - name: Start application
+        run: docker compose up -d
+
+      - name: Wait for API
+        run: |
+          for i in {1..30}; do
+            if curl -fsS http://localhost:8001/api/v1/persons; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "API did not start"
+          docker compose logs
+          exit 1
+
+      - name: Run API Tests
+        uses: matt-ball/newman-action@master
+        with:
+          collection: postman/[inst] Lab1.postman_collection.json
+          environment: postman/[inst][ci] Lab1.postman_environment.json
+          delayRequest: 100
+          reporters: '[ "cli" ]'

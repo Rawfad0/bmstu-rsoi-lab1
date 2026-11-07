@@ -4,7 +4,7 @@ services:
     container_name: person-service
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "8001:8000"
     environment:
       DATABASE_URL: postgresql+psycopg://program:test@db:5432/persons
     depends_on:
